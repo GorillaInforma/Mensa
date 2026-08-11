@@ -1,0 +1,52 @@
+:root {
+  --bg: #0a0e14;
+  --surface: #101724;
+  --surface-2: #16202f;
+  --grid: #223046;
+  --amber: #e8a33d;
+  --amber-dim: #8a662a;
+  --cyan: #5fa8d3;
+  --red: #d1615a;
+  --text: #e8e3d8;
+  --text-dim: #8a93a3;
+  --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --sans: 'Inter', -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 50% 0%, #0f1a2b 0%, transparent 60%);
+}
+
+button {
+  font-family: var(--sans);
+  cursor: pointer;
+}
+
+input {
+  font-family: var(--sans);
+}
+
+::selection {
+  background: var(--amber);
+  color: #0a0e14;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
