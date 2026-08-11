@@ -31,26 +31,85 @@ export default function Home() {
 
   // 1. Registro: pide nombre, obtiene ubicación, crea usuario en DB.
   async function register() {
-    if (!nameInput.trim()) return;
+    const cleanName = nameInput.trim();
+
+    if (!cleanName) {
+      setGeoError('Escribe tu nombre primero.');
+      return;
+    }
+
     if (!navigator.geolocation) {
       setGeoError('Este navegador no soporta geolocalización.');
       return;
     }
+
+    setGeoError(null);
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: nameInput.trim(), lat: latitude, lng: longitude })
-        });
-        const data = await res.json();
-        setUserId(data.userId);
-        setName(data.name);
-        setSelf({ lat: latitude, lng: longitude });
+        try {
+          const { latitude, longitude } = pos.coords;
+
+          const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: cleanName,
+              lat: latitude,
+              lng: longitude
+            })
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            throw new Error(data.error || `Error del servidor (${res.status})`);
+          }
+
+          if (!data.userId) {
+            throw new Error('El servidor no devolvió un ID de usuario.');
+          }
+
+          setUserId(data.userId);
+          setName(data.name || cleanName);
+          setSelf({ lat: latitude, lng: longitude });
+        } catch (err) {
+          console.error('Error registrando usuario:', err);
+          setGeoError(
+            err instanceof Error
+              ? err.message
+              : 'No se pudo activar el radar.'
+          );
+        }
       },
-      (err) => setGeoError('No se pudo obtener tu ubicación: ' + err.message),
-      { enableHighAccuracy: true }
+      (err) => {
+        console.error('Error de geolocalización:', err);
+
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setGeoError(
+              'Permiso de ubicación denegado. Permite la ubicación para este sitio y vuelve a pulsar Activar radar.'
+            );
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setGeoError(
+              'No se pudo obtener tu ubicación. Activa el GPS y vuelve a intentarlo.'
+            );
+            break;
+          case err.TIMEOUT:
+            setGeoError(
+              'El GPS tardó demasiado. Activa la ubicación precisa y vuelve a intentarlo.'
+            );
+            break;
+          default:
+            setGeoError('No se pudo obtener tu ubicación.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
     );
   }
 
